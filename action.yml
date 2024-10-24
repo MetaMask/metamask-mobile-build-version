@@ -6,9 +6,9 @@ runs:
   main: './action/index.js'
 
 inputs:
-  github-token:
-    description: 'A Personal Access Token or the Github Token with Write-Access to Pull Requests. If none provided it will use the default Github Token.'
-    default: ${{ github.token }}
+  build-version-table:
+    default: 'metamask-mobile-build-version'
+    description: 'The name of the table to store the build version.'
     required: false
 
 outputs:

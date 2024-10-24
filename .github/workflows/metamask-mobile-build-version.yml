@@ -1,0 +1,35 @@
+on:
+  workflow_dispatch:
+    inputs:
+      aws-region:
+        description: 'The AWS region to use.'
+        required: true
+        default: 'us-east-2'
+      aws-role-arn:
+        description: 'The ARN of the role to assume.'
+        required: true
+        default: 'arn:aws:iam::123456789012:role/MyGitHubActionsRole'
+      build-version-table:
+        description: 'The name of the table to store the build version.'
+        required: false
+        default: 'metamask-mobile-build-version'
+    outputs:
+        build-version:
+            description: 'Latest build version.'
+            value: ${{ jobs.generate-build-version.steps.build-version.build-version }}
+
+  
+jobs:
+  generate-build-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ github.event.inputs.aws-region }}
+          role-to-assume: ${{ github.event.inputs.aws-role-arn }}
+          role-session-name: GitHubActionSession
+
+      - name: Build Version Generator
+        id: build-version # Set an ID for this step
+        uses: MetaMask/metamask-mobile-build-version@poc
