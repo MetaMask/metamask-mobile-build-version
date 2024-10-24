@@ -3,12 +3,12 @@ on:
     inputs:
       aws-region:
         description: 'The AWS region to use.'
-        required: true
+        required: false
         default: 'us-east-2'
         type: string
       aws-role-arn:
         description: 'The ARN of the role to assume.'
-        required: true
+        required: false
         default: 'arn:aws:iam::024218747365:role/metamask-mobile-build-version'
         type: string
       build-version-table:
