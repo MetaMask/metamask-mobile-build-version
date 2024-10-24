@@ -29,8 +29,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: ${{ github.event.inputs.aws-region }}
-          role-to-assume: ${{ github.event.inputs.aws-role-arn }}
+          aws-region: ${{ inputs.aws-region }}
+          role-to-assume: ${{ inputs.aws-role-arn }}
           role-session-name: GitHubActionSession
 
       - name: Build Version Generator
