@@ -26,6 +26,13 @@ jobs:
   generate-build-version:
     runs-on: ubuntu-latest
     steps:
+
+      - name: Print Inputs
+        run: |
+          echo "AWS Region: ${{ inputs.aws-region }}"
+          echo "Role ARN: ${{ inputs.aws-role-arn }}"
+          echo "Table Name: ${{ inputs.build-version-table }}"
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
