@@ -8,7 +8,7 @@ on:
       aws-role-arn:
         description: 'The ARN of the role to assume.'
         required: true
-        default: 'arn:aws:iam::123456789012:role/MyGitHubActionsRole'
+        default: 'arn:aws:iam::024218747365:role/metamask-mobile-build-version'
       build-version-table:
         description: 'The name of the table to store the build version.'
         required: false
