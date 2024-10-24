@@ -12,6 +12,8 @@ async function main() {
 
     console.log('Hello World printing from metamask-mobile-build-version');
 
+    setOutput('build-version', "1400");
+
   } catch (error) {
     const reason =
       error instanceof Error

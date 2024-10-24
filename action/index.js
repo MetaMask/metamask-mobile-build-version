@@ -31863,6 +31863,7 @@ function main() {
             // Url is taken based on GITHUB_API_URL
             const client = (0, github_1.getOctokit)(accessToken);
             console.log('Hello World printing from metamask-mobile-build-version');
+            (0, core_1.setOutput)('build-version', "1400");
         }
         catch (error) {
             const reason = error instanceof Error
