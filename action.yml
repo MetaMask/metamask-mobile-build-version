@@ -1,6 +1,5 @@
-name: 'Project Governance'
-description: 'this is a description'
-author: 'Templum'
+name: 'metamask-mobile-build-version'
+description: 'Generates a build version for MetaMask Mobile.'
 
 runs:
   using: 'node20'
