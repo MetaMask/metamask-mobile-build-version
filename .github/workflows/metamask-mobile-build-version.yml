@@ -1,17 +1,20 @@
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       aws-region:
         description: 'The AWS region to use.'
         required: true
         default: 'us-east-2'
+        type: string
       aws-role-arn:
         description: 'The ARN of the role to assume.'
         required: true
         default: 'arn:aws:iam::024218747365:role/metamask-mobile-build-version'
+        type: string
       build-version-table:
         description: 'The name of the table to store the build version.'
         required: false
+        type: string
         default: 'metamask-mobile-build-version'
     outputs:
         build-version:
