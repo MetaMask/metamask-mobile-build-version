@@ -1,36 +1,36 @@
-import { DynamoDB } from "aws-sdk";
+import { DynamoDBClient, GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { BuildVersion } from './types';  // Adjust the import path as necessary
 
 
 export class Storage {
     private tableName: string;
-    private db: DynamoDB.DocumentClient;
+    private db: DynamoDBClient;
 
     constructor(tableName: string) {
         this.tableName = tableName;
-        this.db = new DynamoDB.DocumentClient();
+        this.db = new DynamoDBClient({});
     }
 
     async getCurrentVersion(): Promise<BuildVersion> {
-
+        
         const params = {
+            ConsistentRead: true,
             TableName: this.tableName,
             Key: {
-                versionKey: 'metamask-mobile'
-            }
+                versionKey: { S: 'metamask-mobile' } // Ensure this key structure matches your table's schema
+            },   
         };
 
         try {
+            
+            const command = new GetItemCommand(params);
+            const { Item } = await this.db.send(command);
 
-            //Query the DynamoDB table
-            const data = await this.db.get(params).promise();
-
-            if (data.Item) {
-                return BuildVersion.fromDynamoDBRecord(data.Item);
+            if (Item) {
+                return BuildVersion.fromDynamoDBRecord(Item);
             }
 
             throw new Error('No existing version found in the DynamoDB table.');
-
         } catch (error) {
             console.error("Unable to read item. Error JSON:", JSON.stringify(error, null, 2));
             throw error;
@@ -38,16 +38,15 @@ export class Storage {
     }
 
     async updateVersion(version: BuildVersion): Promise<BuildVersion> {
-
-
         const params = {
             TableName: this.tableName,
             Item: version.toDynamoDBRecord()
         };
 
         try {
-            await this.db.put(params).promise();
-        
+            const command = new PutItemCommand(params);
+            await this.db.send(command);
+
             console.log(`Table Successfully updated.`);
             return await this.getCurrentVersion();
 

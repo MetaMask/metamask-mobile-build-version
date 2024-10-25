@@ -7,7 +7,7 @@ async function main() {
   try {
 
     const accessToken = getInput('github-token');
-    const tableName = getInput('build-version-table-name');
+    const tableName = getInput('build-version-table');
 
     const { owner, repo } = context.repo;
 
