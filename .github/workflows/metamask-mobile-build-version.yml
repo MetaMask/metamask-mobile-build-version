@@ -19,7 +19,7 @@ on:
     outputs:
         build-version:
             description: 'Latest build version.'
-            value: ${{ jobs.generate-build-version.steps.build-version.build-version }}
+            value: ${{ jobs.generate-build-version.outputs.build-version }}
 
   
 jobs:
