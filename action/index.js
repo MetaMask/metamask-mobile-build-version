@@ -58713,7 +58713,9 @@ class Storage {
                 TableName: this.tableName,
                 Item: version.toDynamoDBRecord()
             };
+            console.log('Params:', params);
             try {
+                console.log(`Attempting to update item in table: ${this.tableName}`);
                 const command = new client_dynamodb_1.PutItemCommand(params);
                 yield this.db.send(command);
                 console.log(`Table Successfully updated.`);
@@ -58758,10 +58760,10 @@ class BuildVersion {
     }
     toDynamoDBRecord() {
         return {
-            versionKey: this.versionKey,
-            version: this.version,
-            createdAt: this.updatedAt,
-            githubContext: this.githubContext
+            versionKey: { S: this.versionKey },
+            version: { N: this.version.toString() },
+            updatedAt: { S: this.updatedAt },
+            githubContext: { S: JSON.stringify(this.githubContext) }
         };
     }
     static fromDynamoDBRecord(record) {

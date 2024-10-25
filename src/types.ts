@@ -31,12 +31,12 @@ export class BuildVersion {
         this.githubContext = context;
     }
 
-    toDynamoDBRecord(): DynamoDB.DocumentClient.AttributeMap {
+    toDynamoDBRecord(): DynamoDB.DocumentClient.PutItemInputAttributeMap {
         return {
-            versionKey: this.versionKey,
-            version: this.version,
-            createdAt: this.updatedAt,
-            githubContext: this.githubContext
+            versionKey: { S: this.versionKey },
+            version: { N: this.version.toString() },
+            updatedAt: { S: this.updatedAt },
+            githubContext: { S: JSON.stringify(this.githubContext) } 
         };
     }
 

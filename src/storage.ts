@@ -39,12 +39,16 @@ export class Storage {
     }
 
     async updateVersion(version: BuildVersion): Promise<BuildVersion> {
+
         const params = {
             TableName: this.tableName,
             Item: version.toDynamoDBRecord()
         };
 
+        console.log('Params:', params);
+
         try {
+            console.log(`Attempting to update item in table: ${this.tableName}`);
             const command = new PutItemCommand(params);
             await this.db.send(command);
 
