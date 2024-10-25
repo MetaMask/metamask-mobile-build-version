@@ -43,3 +43,6 @@ jobs:
       - name: Build Version Generator
         id: build-version # Set an ID for this step
         uses: MetaMask/metamask-mobile-build-version@poc
+        with:
+          build-version-table: metamask-mobile-build-version
+          github-token: ${{ secrets.GITHUB_TOKEN }}
