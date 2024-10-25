@@ -29,12 +29,6 @@ jobs:
       build-version: ${{ steps.build-version.outputs.build-version }} # Capture the output & propagate it up
     steps:
 
-      - name: Print Inputs
-        run: |
-          echo "AWS Region: ${{ inputs.aws-region }}"
-          echo "Role ARN: ${{ inputs.aws-role-arn }}"
-          echo "Table Name: ${{ inputs.build-version-table }}"
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
