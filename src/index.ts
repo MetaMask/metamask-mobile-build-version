@@ -6,7 +6,6 @@ async function main() {
     const accessToken = getInput('github-token');
     const { owner, repo } = context.repo;
 
-
     // Url is taken based on GITHUB_API_URL
     const client = getOctokit(accessToken);
 
