@@ -25,6 +25,8 @@ on:
 jobs:
   generate-build-version:
     runs-on: ubuntu-latest
+    outputs:
+      build-version: ${{ steps.build-version.outputs.build-version }} # Capture the output & propagate it up
     steps:
 
       - name: Print Inputs
