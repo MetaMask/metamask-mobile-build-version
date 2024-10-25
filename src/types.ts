@@ -22,9 +22,9 @@ export class BuildVersion {
     versionKey: string;
     version: number;
     updatedAt: string;
-    githubContext: GitHubContext;
+    githubContext?: GitHubContext;
 
-    constructor(versionKey: string, version: number, updatedAt: string, context: GitHubContext) {
+    constructor(versionKey: string, version: number, updatedAt: string, context?: GitHubContext) {
         this.versionKey = versionKey;
         this.version = version;
         this.updatedAt = updatedAt;
@@ -45,8 +45,8 @@ export class BuildVersion {
         return new BuildVersion(
             record.versionKey as string,
             record.version as number,
-            record.createdAt as string,
-            record.githubContext as GitHubContext
+            record.createdAt ? record.createdAt as string : new Date().toISOString(),
+            record.githubContext ? record.githubContext as GitHubContext : undefined
         );
     }
 }

@@ -36,14 +36,15 @@ async function main() {
 
     // Attempt to get the current version
     const currentVersion = await storage.getCurrentVersion();
+
     console.log(`Current version number retrieved: ${currentVersion.version}`);
     console.log(`Last Updated at : ${currentVersion.updatedAt}`);
-    console.log(`Created By : ${currentVersion.githubContext.actor}`);
-    console.log(`For Github Ref : ${currentVersion.githubContext.ref}`);
-    console.log(`For Github SHA : ${currentVersion.githubContext.sha}`);
-    console.log(`For Github Run ID : ${currentVersion.githubContext.runId}`);
-    console.log(`For Github Run Number : ${currentVersion.githubContext.runNumber}`);
-    console.log(`For Github Event Name : ${currentVersion.githubContext.eventName}`);
+    console.log(`Created By : ${currentVersion.githubContext?.actor}`);
+    console.log(`For Github Ref : ${currentVersion.githubContext?.ref}`);
+    console.log(`For Github SHA : ${currentVersion.githubContext?.sha}`);
+    console.log(`For Github Run ID : ${currentVersion.githubContext?.runId}`);
+    console.log(`For Github Run Number : ${currentVersion.githubContext?.runNumber}`);
+    console.log(`For Github Event Name : ${currentVersion.githubContext?.eventName}`);
 
 
     const newVersion = currentVersion
@@ -58,12 +59,12 @@ async function main() {
 
     console.log(`Updated version number: ${updatedVersion.version}`);
     console.log(`Last Updated at : ${updatedVersion.updatedAt}`);
-    console.log(`Created By : ${updatedVersion.githubContext.actor}`);
-    console.log(`For Github Ref : ${updatedVersion.githubContext.ref}`);
-    console.log(`For Github SHA : ${updatedVersion.githubContext.sha}`);
-    console.log(`For Github Run ID : ${updatedVersion.githubContext.runId}`);
-    console.log(`For Github Run Number : ${updatedVersion.githubContext.runNumber}`);
-    console.log(`For Github Event Name : ${updatedVersion.githubContext.eventName}`);
+    console.log(`Created By : ${updatedVersion.githubContext?.actor}`);
+    console.log(`For Github Ref : ${updatedVersion.githubContext?.ref}`);
+    console.log(`For Github SHA : ${updatedVersion.githubContext?.sha}`);
+    console.log(`For Github Run ID : ${updatedVersion.githubContext?.runId}`);
+    console.log(`For Github Run Number : ${updatedVersion.githubContext?.runNumber}`);
+    console.log(`For Github Event Name : ${updatedVersion.githubContext?.eventName}`);
 
 
 
