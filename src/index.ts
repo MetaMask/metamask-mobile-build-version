@@ -23,15 +23,6 @@ async function main() {
     // Url is taken based on GITHUB_API_URL
     const client = getOctokit(accessToken);
 
-    console.log('Hello World printing from metamask-mobile-build-version');
-
-    const buildVersion = "1400";
-
-    console.log(`Build version: ${buildVersion}`);
-
-
-
-
     const storage = new Storage(tableName);
 
     // Attempt to get the current version

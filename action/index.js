@@ -58617,9 +58617,6 @@ function main() {
             };
             // Url is taken based on GITHUB_API_URL
             const client = (0, github_1.getOctokit)(accessToken);
-            console.log('Hello World printing from metamask-mobile-build-version');
-            const buildVersion = "1400";
-            console.log(`Build version: ${buildVersion}`);
             const storage = new storage_1.Storage(tableName);
             // Attempt to get the current version
             const currentVersion = yield storage.getCurrentVersion();
@@ -58696,6 +58693,7 @@ class Storage {
                 },
             };
             try {
+                console.log(`Attempting to read item from table: ${this.tableName}`);
                 const command = new client_dynamodb_1.GetItemCommand(params);
                 const { Item } = yield this.db.send(command);
                 if (Item) {
@@ -58767,6 +58765,7 @@ class BuildVersion {
         };
     }
     static fromDynamoDBRecord(record) {
+        console.log('Record:', record);
         return new BuildVersion(record.versionKey, record.version, record.createdAt ? record.createdAt : new Date().toISOString(), record.githubContext ? record.githubContext : undefined);
     }
 }

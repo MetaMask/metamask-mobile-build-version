@@ -22,7 +22,8 @@ export class Storage {
         };
 
         try {
-            
+
+            console.log(`Attempting to read item from table: ${this.tableName}`);
             const command = new GetItemCommand(params);
             const { Item } = await this.db.send(command);
 

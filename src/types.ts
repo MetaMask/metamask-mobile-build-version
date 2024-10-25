@@ -42,6 +42,8 @@ export class BuildVersion {
 
     static fromDynamoDBRecord(record: DynamoDB.DocumentClient.AttributeMap): BuildVersion {
 
+        console.log('Record:', record);
+
         return new BuildVersion(
             record.versionKey as string,
             record.version as number,
