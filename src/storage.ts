@@ -1,5 +1,6 @@
 import { DynamoDBClient, GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { BuildVersion } from './types';  // Adjust the import path as necessary
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 
 
 export class Storage {
@@ -25,13 +26,21 @@ export class Storage {
 
             console.log(`Attempting to read item from table: ${this.tableName}`);
             const command = new GetItemCommand(params);
-            const { Item } = await this.db.send(command);
+            const response = await this.db.send(command);
 
-            if (Item) {
-                return BuildVersion.fromDynamoDBRecord(Item);
+            if (!response.Item) {
+                throw new Error('No existing version found in the DynamoDB table.');
             }
 
-            throw new Error('No existing version found in the DynamoDB table.');
+            const unmarshalledItem = unmarshall(response.Item);
+            return new BuildVersion(
+                unmarshalledItem.versionKey,
+                unmarshalledItem.versionNumber,
+                unmarshalledItem.createdAt,
+                unmarshalledItem.githubContext
+            );
+
+
         } catch (error) {
             console.error("Unable to read item. Error JSON:", JSON.stringify(error, null, 2));
             throw error;
@@ -42,7 +51,7 @@ export class Storage {
 
         const params = {
             TableName: this.tableName,
-            Item: version.toDynamoDBRecord()
+            Item: marshall(version)
         };
 
         console.log('Params:', params);
