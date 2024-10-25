@@ -59050,7 +59050,7 @@ class Storage {
                     throw new Error('No existing version found in the DynamoDB table.');
                 }
                 const unmarshalledItem = (0, util_dynamodb_1.unmarshall)(response.Item);
-                return new types_1.BuildVersion(unmarshalledItem.versionKey, unmarshalledItem.versionNumber, unmarshalledItem.createdAt, unmarshalledItem.githubContext);
+                return new types_1.BuildVersion(unmarshalledItem.versionKey, unmarshalledItem.versionNumber, unmarshalledItem.updatedAt, unmarshalledItem.githubContext);
             }
             catch (error) {
                 console.error("Unable to read item. Error JSON:", JSON.stringify(error, null, 2));

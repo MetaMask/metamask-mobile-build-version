@@ -36,7 +36,7 @@ export class Storage {
             return new BuildVersion(
                 unmarshalledItem.versionKey,
                 unmarshalledItem.versionNumber,
-                unmarshalledItem.createdAt,
+                unmarshalledItem.updatedAt,
                 unmarshalledItem.githubContext
             );
 
