@@ -58946,13 +58946,15 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core_1 = __nccwpck_require__(2186);
 const github_1 = __nccwpck_require__(5438);
 const storage_1 = __nccwpck_require__(9898);
+// Main function
 function main() {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            // Get the github action inputs
             const accessToken = (0, core_1.getInput)('github-token');
-            const tableName = (0, core_1.getInput)('build-version-table');
-            const { owner, repo } = github_1.context.repo;
+            const buildVersionTable = (0, core_1.getInput)('build-version-table');
+            const versionKey = (0, core_1.getInput)('build-version-key');
+            // Get the github context
             const githubContext = {
                 eventName: github_1.context.eventName,
                 sha: github_1.context.sha,
@@ -58960,38 +58962,28 @@ function main() {
                 actor: github_1.context.actor,
                 runNumber: github_1.context.runNumber,
                 runId: github_1.context.runId,
-                workflow: github_1.context.workflow
+                workflow: github_1.context.workflow,
+                repository: github_1.context.repo.repo,
+                organization: github_1.context.repo.owner,
             };
-            // Url is taken based on GITHUB_API_URL
-            const client = (0, github_1.getOctokit)(accessToken);
-            const storage = new storage_1.Storage(tableName);
-            // Attempt to get the current version
-            const currentVersion = yield storage.getCurrentVersion();
-            console.log(`Current version number retrieved: ${currentVersion.versionNumber}`);
+            const storage = new storage_1.Storage(buildVersionTable);
+            // Fetch the current build version information.
+            const currentVersion = yield storage.getCurrentVersion(versionKey);
+            console.log(`Current version number retrieved: ${currentVersion.versionNumber} for version key ${currentVersion.versionKey}`);
             console.log(`Last Updated at : ${currentVersion.updatedAt}`);
-            console.log(`Created By : ${(_a = currentVersion.githubContext) === null || _a === void 0 ? void 0 : _a.actor}`);
-            console.log(`For Github Ref : ${(_b = currentVersion.githubContext) === null || _b === void 0 ? void 0 : _b.ref}`);
-            console.log(`For Github SHA : ${(_c = currentVersion.githubContext) === null || _c === void 0 ? void 0 : _c.sha}`);
-            console.log(`For Github Run ID : ${(_d = currentVersion.githubContext) === null || _d === void 0 ? void 0 : _d.runId}`);
-            console.log(`For Github Run Number : ${(_e = currentVersion.githubContext) === null || _e === void 0 ? void 0 : _e.runNumber}`);
-            console.log(`For Github Event Name : ${(_f = currentVersion.githubContext) === null || _f === void 0 ? void 0 : _f.eventName}`);
-            console.log(`For Github Workflow : ${(_g = currentVersion.githubContext) === null || _g === void 0 ? void 0 : _g.workflow}`);
+            printContext(currentVersion.githubContext);
             const newVersion = currentVersion;
             //Increment Version & Meta Data
             newVersion.versionNumber = currentVersion.versionNumber + 1;
             newVersion.updatedAt = new Date().toISOString();
             newVersion.githubContext = githubContext;
             newVersion.versionKey = 'metamask-mobile';
+            // Update the build version information
             const updatedVersion = yield storage.updateVersion(newVersion);
-            console.log(`Updated version number: ${updatedVersion.versionNumber}`);
+            console.log(`Updated version number: ${updatedVersion.versionNumber} for version key ${updatedVersion.versionKey}`);
             console.log(`Last Updated at : ${updatedVersion.updatedAt}`);
-            console.log(`Created By : ${(_h = updatedVersion.githubContext) === null || _h === void 0 ? void 0 : _h.actor}`);
-            console.log(`For Github Ref : ${(_j = updatedVersion.githubContext) === null || _j === void 0 ? void 0 : _j.ref}`);
-            console.log(`For Github SHA : ${(_k = updatedVersion.githubContext) === null || _k === void 0 ? void 0 : _k.sha}`);
-            console.log(`For Github Run ID : ${(_l = updatedVersion.githubContext) === null || _l === void 0 ? void 0 : _l.runId}`);
-            console.log(`For Github Run Number : ${(_m = updatedVersion.githubContext) === null || _m === void 0 ? void 0 : _m.runNumber}`);
-            console.log(`For Github Event Name : ${(_o = updatedVersion.githubContext) === null || _o === void 0 ? void 0 : _o.eventName}`);
-            console.log(`For Github Workflow : ${(_p = updatedVersion.githubContext) === null || _p === void 0 ? void 0 : _p.workflow}`);
+            printContext(updatedVersion.githubContext);
+            // Set the output for the build version for use by downstream actions/workflows
             (0, core_1.setOutput)('build-version', updatedVersion.versionNumber.toString());
         }
         catch (error) {
@@ -59003,6 +58995,21 @@ function main() {
             (0, core_1.setFailed)(reason);
         }
     });
+}
+function printContext(githubContext) {
+    if (githubContext) {
+        console.log(`Created By : ${githubContext.actor}`);
+        console.log(`For Github Ref : ${githubContext.ref}`);
+        console.log(`For Github SHA : ${githubContext.sha}`);
+        console.log(`For Github Run ID : ${githubContext.runId}`);
+        console.log(`For Github Run Number : ${githubContext.runNumber}`);
+        console.log(`For Github Event Name : ${githubContext.eventName}`);
+        console.log(`For Github Workflow : ${githubContext.workflow}`);
+        console.log(`For Github Repository : ${githubContext.repository}`);
+    }
+    else {
+        console.log("No GitHub context available.");
+    }
 }
 main();
 
@@ -59026,20 +59033,28 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Storage = void 0;
 const client_dynamodb_1 = __nccwpck_require__(3363);
-const types_1 = __nccwpck_require__(5077); // Adjust the import path as necessary
+const types_1 = __nccwpck_require__(5077);
 const util_dynamodb_1 = __nccwpck_require__(4644);
+/**
+ * Storage class to interact with DynamoDB
+ */
 class Storage {
     constructor(tableName) {
         this.tableName = tableName;
         this.db = new client_dynamodb_1.DynamoDBClient({});
     }
-    getCurrentVersion() {
+    /**
+     * Get the current build version information from the DynamoDB table
+     * @returns build version
+     */
+    getCurrentVersion(versionKey) {
         return __awaiter(this, void 0, void 0, function* () {
+            // DDB Query
             const params = {
                 ConsistentRead: true,
                 TableName: this.tableName,
                 Key: {
-                    versionKey: { S: 'metamask-mobile' } // Ensure this key structure matches your table's schema
+                    versionKey: { S: versionKey },
                 },
             };
             try {
@@ -59053,29 +59068,33 @@ class Storage {
                 return new types_1.BuildVersion(unmarshalledItem.versionKey, unmarshalledItem.versionNumber, unmarshalledItem.updatedAt, unmarshalledItem.githubContext);
             }
             catch (error) {
-                console.error("Unable to read item. Error JSON:", JSON.stringify(error, null, 2));
+                console.error('Unable to read item. Error JSON:', JSON.stringify(error, null, 2));
                 throw error;
             }
         });
     }
+    /**
+     * Update the build version information in the DynamoDB table
+     * @param version build version to update
+     * @returns updated build version
+     */
     updateVersion(version) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const params = {
                     TableName: this.tableName,
                     Item: (0, util_dynamodb_1.marshall)(version, {
-                        convertClassInstanceToMap: true
+                        convertClassInstanceToMap: true,
                     }),
                 };
-                console.log('Params:', params);
-                console.log(`Attempting to update item in table: ${this.tableName}`);
+                console.log(`Attempting to update item in table: ${this.tableName} for version key ${version.versionKey}`);
                 const command = new client_dynamodb_1.PutItemCommand(params);
                 yield this.db.send(command);
                 console.log(`Table Successfully updated.`);
-                return yield this.getCurrentVersion();
+                return yield this.getCurrentVersion(version.versionKey);
             }
             catch (error) {
-                console.error("Unable to update item. Error JSON:", JSON.stringify(error, null, 2));
+                console.error('Unable to update item. Error JSON:', JSON.stringify(error, null, 2));
                 throw error;
             }
         });
@@ -59092,19 +59111,10 @@ exports.Storage = Storage;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.BuildVersion = exports.GitHubContext = void 0;
-class GitHubContext {
-    constructor(eventName, sha, ref, actor, runNumber, runId, workflow) {
-        this.eventName = eventName;
-        this.sha = sha;
-        this.ref = ref;
-        this.actor = actor;
-        this.runNumber = runNumber;
-        this.runId = runId;
-        this.workflow = workflow;
-    }
-}
-exports.GitHubContext = GitHubContext;
+exports.GitHubContext = exports.BuildVersion = void 0;
+/**
+ * Represents a build version.
+ */
 class BuildVersion {
     constructor(versionKey, versionNumber, updatedAt, context) {
         this.versionKey = versionKey;
@@ -59114,6 +59124,23 @@ class BuildVersion {
     }
 }
 exports.BuildVersion = BuildVersion;
+/**
+ * Represents the GitHub context for the current action execution
+ */
+class GitHubContext {
+    constructor(eventName, sha, ref, actor, runNumber, runId, workflow, organization, repository) {
+        this.eventName = eventName;
+        this.sha = sha;
+        this.ref = ref;
+        this.actor = actor;
+        this.runNumber = runNumber;
+        this.runId = runId;
+        this.workflow = workflow;
+        this.organization = organization;
+        this.repository = repository;
+    }
+}
+exports.GitHubContext = GitHubContext;
 
 
 /***/ }),

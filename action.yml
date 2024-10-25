@@ -10,10 +10,13 @@ inputs:
     default: 'metamask-mobile-build-version'
     description: 'The name of the table to store the build version.'
     required: false
+  build-version-key:
+    default: 'metamask-mobile'
+    description: 'The key to store the build version under.'
+    required: false
   github-token:
     description: 'The GitHub'
     required: true
-    
 
 outputs:
   build-version:

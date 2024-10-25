@@ -17,18 +17,16 @@ on:
         type: string
         default: 'metamask-mobile-build-version'
     outputs:
-        build-version:
-            description: 'Latest build version.'
-            value: ${{ jobs.generate-build-version.outputs.build-version }}
+      build-version:
+        description: 'Latest build version.'
+        value: ${{ jobs.generate-build-version.outputs.build-version }}
 
-  
 jobs:
   generate-build-version:
     runs-on: ubuntu-latest
     outputs:
       build-version: ${{ steps.build-version.outputs.build-version }} # Capture the output & propagate it up
     steps:
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -41,4 +39,5 @@ jobs:
         uses: MetaMask/metamask-mobile-build-version@poc
         with:
           build-version-table: metamask-mobile-build-version
+          build-version-key: metamask-mobile
           github-token: ${{ secrets.GITHUB_TOKEN }}

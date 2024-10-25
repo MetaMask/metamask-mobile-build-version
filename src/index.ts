@@ -1,16 +1,17 @@
 import { getInput, setFailed, setOutput } from '@actions/core';
 import { context, getOctokit } from '@actions/github';
 import { Storage } from './storage';
+import { BuildVersion, GitHubContext } from './types';
 
+// Main function
 async function main() {
-
   try {
-
+    // Get the github action inputs
     const accessToken = getInput('github-token');
-    const tableName = getInput('build-version-table');
+    const buildVersionTable = getInput('build-version-table');
+    const versionKey = getInput('build-version-key');
 
-    const { owner, repo } = context.repo;
-
+    // Get the github context
     const githubContext = {
       eventName: context.eventName,
       sha: context.sha,
@@ -18,29 +19,23 @@ async function main() {
       actor: context.actor,
       runNumber: context.runNumber,
       runId: context.runId,
-      workflow: context.workflow
+      workflow: context.workflow,
+      repository: context.repo.repo,
+      organization: context.repo.owner,
     };
 
-    // Url is taken based on GITHUB_API_URL
-    const client = getOctokit(accessToken);
+    const storage = new Storage(buildVersionTable);
 
-    const storage = new Storage(tableName);
+    // Fetch the current build version information.
+    const currentVersion = await storage.getCurrentVersion(versionKey);
 
-    // Attempt to get the current version
-    const currentVersion = await storage.getCurrentVersion();
-
-    console.log(`Current version number retrieved: ${currentVersion.versionNumber}`);
+    console.log(
+      `Current version number retrieved: ${currentVersion.versionNumber} for version key ${currentVersion.versionKey}`,
+    );
     console.log(`Last Updated at : ${currentVersion.updatedAt}`);
-    console.log(`Created By : ${currentVersion.githubContext?.actor}`);
-    console.log(`For Github Ref : ${currentVersion.githubContext?.ref}`);
-    console.log(`For Github SHA : ${currentVersion.githubContext?.sha}`);
-    console.log(`For Github Run ID : ${currentVersion.githubContext?.runId}`);
-    console.log(`For Github Run Number : ${currentVersion.githubContext?.runNumber}`);
-    console.log(`For Github Event Name : ${currentVersion.githubContext?.eventName}`);
-    console.log(`For Github Workflow : ${currentVersion.githubContext?.workflow}`);
+    printContext(currentVersion.githubContext);
 
-
-    const newVersion = currentVersion
+    const newVersion = currentVersion;
 
     //Increment Version & Meta Data
     newVersion.versionNumber = currentVersion.versionNumber + 1;
@@ -48,22 +43,18 @@ async function main() {
     newVersion.githubContext = githubContext;
     newVersion.versionKey = 'metamask-mobile';
 
+    // Update the build version information
     const updatedVersion = await storage.updateVersion(newVersion);
 
-    console.log(`Updated version number: ${updatedVersion.versionNumber}`);
+    console.log(
+      `Updated version number: ${updatedVersion.versionNumber} for version key ${updatedVersion.versionKey}`,
+    );
     console.log(`Last Updated at : ${updatedVersion.updatedAt}`);
-    console.log(`Created By : ${updatedVersion.githubContext?.actor}`);
-    console.log(`For Github Ref : ${updatedVersion.githubContext?.ref}`);
-    console.log(`For Github SHA : ${updatedVersion.githubContext?.sha}`);
-    console.log(`For Github Run ID : ${updatedVersion.githubContext?.runId}`);
-    console.log(`For Github Run Number : ${updatedVersion.githubContext?.runNumber}`);
-    console.log(`For Github Event Name : ${updatedVersion.githubContext?.eventName}`);
-    console.log(`For Github Workflow : ${updatedVersion.githubContext?.workflow}`);
+    printContext(updatedVersion.githubContext);
 
-
-
+    // Set the output for the build version for use by downstream actions/workflows
     setOutput('build-version', updatedVersion.versionNumber.toString());
-
+    
   } catch (error) {
     const reason =
       error instanceof Error
@@ -75,5 +66,22 @@ async function main() {
     setFailed(reason);
   }
 }
+
+function printContext(githubContext?: GitHubContext): void {
+
+  if (githubContext) {
+      console.log(`Created By : ${githubContext.actor}`);
+      console.log(`For Github Ref : ${githubContext.ref}`);
+      console.log(`For Github SHA : ${githubContext.sha}`);
+      console.log(`For Github Run ID : ${githubContext.runId}`);
+      console.log(`For Github Run Number : ${githubContext.runNumber}`);
+      console.log(`For Github Event Name : ${githubContext.eventName}`);
+      console.log(`For Github Workflow : ${githubContext.workflow}`);
+      console.log(`For Github Repository : ${githubContext.repository}`);
+  } else {
+      console.log("No GitHub context available.");
+  }
+}
+
 
 main();
