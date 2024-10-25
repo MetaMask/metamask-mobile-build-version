@@ -36,7 +36,7 @@ export class BuildVersion {
     toDynamoDBRecord(): DynamoDB.DocumentClient.PutItemInputAttributeMap {
         return {
             versionKey: { S: this.versionKey },
-            versionNumber: { N: this.versionNumber },
+            versionNumber: { N: this.versionNumber.toString() }, // DB Expects it as string in underlying by marked with N
             updatedAt: { S: this.updatedAt },
             githubContext: { S: JSON.stringify(this.githubContext) } 
         };

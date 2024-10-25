@@ -58765,7 +58765,7 @@ class BuildVersion {
     toDynamoDBRecord() {
         return {
             versionKey: { S: this.versionKey },
-            versionNumber: { N: this.versionNumber },
+            versionNumber: { N: this.versionNumber.toString() },
             updatedAt: { S: this.updatedAt },
             githubContext: { S: JSON.stringify(this.githubContext) }
         };
