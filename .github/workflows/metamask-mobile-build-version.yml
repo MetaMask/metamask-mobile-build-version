@@ -37,7 +37,7 @@ jobs:
           role-session-name: GitHubActionSession
 
       - name: Build Version Generator
-        id: build-version # Set an ID for this step
+        id: build-version
         uses: MetaMask/metamask-mobile-build-version@poc
         with:
           build-version-table: metamask-mobile-build-version
