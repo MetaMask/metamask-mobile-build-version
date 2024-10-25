@@ -11,7 +11,12 @@ async function main() {
 
     console.log('Hello World printing from metamask-mobile-build-version');
 
-    setOutput('build-version', "1400");
+    const buildVersion = "1400";
+
+    console.log(`Build version: ${buildVersion}`);
+
+
+    setOutput('build-version',buildVersion);
 
   } catch (error) {
     const reason =
