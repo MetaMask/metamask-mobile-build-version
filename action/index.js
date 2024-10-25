@@ -58601,7 +58601,7 @@ const core_1 = __nccwpck_require__(2186);
 const github_1 = __nccwpck_require__(5438);
 const storage_1 = __nccwpck_require__(9898);
 function main() {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const accessToken = (0, core_1.getInput)('github-token');
@@ -58613,14 +58613,15 @@ function main() {
                 ref: github_1.context.ref,
                 actor: github_1.context.actor,
                 runNumber: github_1.context.runNumber,
-                runId: github_1.context.runId
+                runId: github_1.context.runId,
+                workflow: github_1.context.workflow
             };
             // Url is taken based on GITHUB_API_URL
             const client = (0, github_1.getOctokit)(accessToken);
             const storage = new storage_1.Storage(tableName);
             // Attempt to get the current version
             const currentVersion = yield storage.getCurrentVersion();
-            console.log(`Current version number retrieved: ${currentVersion.version}`);
+            console.log(`Current version number retrieved: ${currentVersion.versionNumber}`);
             console.log(`Last Updated at : ${currentVersion.updatedAt}`);
             console.log(`Created By : ${(_a = currentVersion.githubContext) === null || _a === void 0 ? void 0 : _a.actor}`);
             console.log(`For Github Ref : ${(_b = currentVersion.githubContext) === null || _b === void 0 ? void 0 : _b.ref}`);
@@ -58628,22 +58629,24 @@ function main() {
             console.log(`For Github Run ID : ${(_d = currentVersion.githubContext) === null || _d === void 0 ? void 0 : _d.runId}`);
             console.log(`For Github Run Number : ${(_e = currentVersion.githubContext) === null || _e === void 0 ? void 0 : _e.runNumber}`);
             console.log(`For Github Event Name : ${(_f = currentVersion.githubContext) === null || _f === void 0 ? void 0 : _f.eventName}`);
+            console.log(`For Github Workflow : ${(_g = currentVersion.githubContext) === null || _g === void 0 ? void 0 : _g.workflow}`);
             const newVersion = currentVersion;
             //Increment Version & Meta Data
-            newVersion.version = currentVersion.version + 1;
+            newVersion.versionNumber = currentVersion.versionNumber + 1;
             newVersion.updatedAt = new Date().toISOString();
             newVersion.githubContext = githubContext;
             newVersion.versionKey = 'metamask-mobile';
             const updatedVersion = yield storage.updateVersion(newVersion);
-            console.log(`Updated version number: ${updatedVersion.version}`);
+            console.log(`Updated version number: ${updatedVersion.versionNumber}`);
             console.log(`Last Updated at : ${updatedVersion.updatedAt}`);
-            console.log(`Created By : ${(_g = updatedVersion.githubContext) === null || _g === void 0 ? void 0 : _g.actor}`);
-            console.log(`For Github Ref : ${(_h = updatedVersion.githubContext) === null || _h === void 0 ? void 0 : _h.ref}`);
-            console.log(`For Github SHA : ${(_j = updatedVersion.githubContext) === null || _j === void 0 ? void 0 : _j.sha}`);
-            console.log(`For Github Run ID : ${(_k = updatedVersion.githubContext) === null || _k === void 0 ? void 0 : _k.runId}`);
-            console.log(`For Github Run Number : ${(_l = updatedVersion.githubContext) === null || _l === void 0 ? void 0 : _l.runNumber}`);
-            console.log(`For Github Event Name : ${(_m = updatedVersion.githubContext) === null || _m === void 0 ? void 0 : _m.eventName}`);
-            (0, core_1.setOutput)('build-version', updatedVersion.version.toString());
+            console.log(`Created By : ${(_h = updatedVersion.githubContext) === null || _h === void 0 ? void 0 : _h.actor}`);
+            console.log(`For Github Ref : ${(_j = updatedVersion.githubContext) === null || _j === void 0 ? void 0 : _j.ref}`);
+            console.log(`For Github SHA : ${(_k = updatedVersion.githubContext) === null || _k === void 0 ? void 0 : _k.sha}`);
+            console.log(`For Github Run ID : ${(_l = updatedVersion.githubContext) === null || _l === void 0 ? void 0 : _l.runId}`);
+            console.log(`For Github Run Number : ${(_m = updatedVersion.githubContext) === null || _m === void 0 ? void 0 : _m.runNumber}`);
+            console.log(`For Github Event Name : ${(_o = updatedVersion.githubContext) === null || _o === void 0 ? void 0 : _o.eventName}`);
+            console.log(`For Github Workflow : ${(_p = updatedVersion.githubContext) === null || _p === void 0 ? void 0 : _p.workflow}`);
+            (0, core_1.setOutput)('build-version', updatedVersion.versionNumber.toString());
         }
         catch (error) {
             const reason = error instanceof Error
@@ -58741,34 +58744,35 @@ exports.Storage = Storage;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BuildVersion = exports.GitHubContext = void 0;
 class GitHubContext {
-    constructor(eventName, sha, ref, actor, runNumber, runId) {
+    constructor(eventName, sha, ref, actor, runNumber, runId, workflow) {
         this.eventName = eventName;
         this.sha = sha;
         this.ref = ref;
         this.actor = actor;
         this.runNumber = runNumber;
         this.runId = runId;
+        this.workflow = workflow;
     }
 }
 exports.GitHubContext = GitHubContext;
 class BuildVersion {
-    constructor(versionKey, version, updatedAt, context) {
+    constructor(versionKey, versionNumber, updatedAt, context) {
         this.versionKey = versionKey;
-        this.version = version;
+        this.versionNumber = versionNumber;
         this.updatedAt = updatedAt;
         this.githubContext = context;
     }
     toDynamoDBRecord() {
         return {
             versionKey: { S: this.versionKey },
-            version: { N: this.version.toString() },
+            versionNumber: { N: this.versionNumber },
             updatedAt: { S: this.updatedAt },
             githubContext: { S: JSON.stringify(this.githubContext) }
         };
     }
     static fromDynamoDBRecord(record) {
         console.log('Record:', record);
-        return new BuildVersion(record.versionKey, record.version, record.createdAt ? record.createdAt : new Date().toISOString(), record.githubContext ? record.githubContext : undefined);
+        return new BuildVersion(record.versionKey, record.versionNumber, record.createdAt ? record.createdAt : new Date().toISOString(), record.githubContext ? record.githubContext : undefined);
     }
 }
 exports.BuildVersion = BuildVersion;

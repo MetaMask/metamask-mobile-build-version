@@ -7,26 +7,28 @@ export class GitHubContext {
     actor: string;
     runNumber: number;
     runId: number;
+    workflow: string;
 
-    constructor(eventName: string, sha: string, ref: string, actor: string, runNumber: number, runId: number) {
+    constructor(eventName: string, sha: string, ref: string, actor: string, runNumber: number, runId: number, workflow: string) {
         this.eventName = eventName;
         this.sha = sha;
         this.ref = ref;
         this.actor = actor;
         this.runNumber = runNumber;
         this.runId = runId;
+        this.workflow = workflow;
     }
 }
 
 export class BuildVersion {
     versionKey: string;
-    version: number;
+    versionNumber: number;
     updatedAt: string;
     githubContext?: GitHubContext;
 
-    constructor(versionKey: string, version: number, updatedAt: string, context?: GitHubContext) {
+    constructor(versionKey: string, versionNumber: number, updatedAt: string, context?: GitHubContext) {
         this.versionKey = versionKey;
-        this.version = version;
+        this.versionNumber = versionNumber;
         this.updatedAt = updatedAt;
         this.githubContext = context;
     }
@@ -34,7 +36,7 @@ export class BuildVersion {
     toDynamoDBRecord(): DynamoDB.DocumentClient.PutItemInputAttributeMap {
         return {
             versionKey: { S: this.versionKey },
-            version: { N: this.version.toString() },
+            versionNumber: { N: this.versionNumber },
             updatedAt: { S: this.updatedAt },
             githubContext: { S: JSON.stringify(this.githubContext) } 
         };
@@ -46,7 +48,7 @@ export class BuildVersion {
 
         return new BuildVersion(
             record.versionKey as string,
-            record.version as number,
+            record.versionNumber as number,
             record.createdAt ? record.createdAt as string : new Date().toISOString(),
             record.githubContext ? record.githubContext as GitHubContext : undefined
         );
