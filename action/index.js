@@ -59060,12 +59060,14 @@ class Storage {
     }
     updateVersion(version) {
         return __awaiter(this, void 0, void 0, function* () {
-            const params = {
-                TableName: this.tableName,
-                Item: (0, util_dynamodb_1.marshall)(version)
-            };
-            console.log('Params:', params);
             try {
+                const params = {
+                    TableName: this.tableName,
+                    Item: (0, util_dynamodb_1.marshall)(version, {
+                        convertClassInstanceToMap: true
+                    }),
+                };
+                console.log('Params:', params);
                 console.log(`Attempting to update item in table: ${this.tableName}`);
                 const command = new client_dynamodb_1.PutItemCommand(params);
                 yield this.db.send(command);

@@ -49,14 +49,16 @@ export class Storage {
 
     async updateVersion(version: BuildVersion): Promise<BuildVersion> {
 
-        const params = {
-            TableName: this.tableName,
-            Item: marshall(version)
-        };
-
-        console.log('Params:', params);
-
         try {
+
+            const params = {
+                TableName: this.tableName,
+                Item: marshall(version, {
+                    convertClassInstanceToMap: true
+                }),
+            };
+    
+            console.log('Params:', params);
             console.log(`Attempting to update item in table: ${this.tableName}`);
             const command = new PutItemCommand(params);
             await this.db.send(command);
