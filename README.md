@@ -109,8 +109,10 @@ Ensure that your latest changes are compiled or transpiled into JavaScript that 
 npm run build
 ```
 
-### Other Useful Information
+#### Backend and Infrastructure
 
+The backend for this action relies on **DynamoDB**, and the dependent AWS infrastructure is provisioned and managed through a specific GitHub repository. For more details on the infrastructure setup, configurations, and management, refer to the following repository:
 
+- [ConsenSys Vertical Apps / Metamask Mobile Infra](https://github.com/consensys-vertical-apps/metamask-mobile-infra)
 
-
+This repository contains all the necessary infrastructure as Code to provision the Tables/Roles this action interacts with to securely manage the build version.
