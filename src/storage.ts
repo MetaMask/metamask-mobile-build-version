@@ -1,8 +1,4 @@
-import {
-  DynamoDBClient,
-  GetItemCommand,
-  PutItemCommand,
-} from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { BuildVersion } from './types';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 
@@ -39,6 +35,7 @@ export class Storage {
     };
 
     try {
+
       console.log(`Attempting to read item from table: ${this.tableName}`);
       const command = new GetItemCommand(params);
       const response = await this.db.send(command);
@@ -57,7 +54,7 @@ export class Storage {
     } catch (error) {
       console.error(
         'Unable to read item. Error JSON:',
-        JSON.stringify(error, null, 2),
+        error,
       );
       throw error;
     }
@@ -86,11 +83,9 @@ export class Storage {
 
       console.log(`Table Successfully updated.`);
       return await this.getCurrentVersion(version.versionKey);
+      
     } catch (error) {
-      console.error(
-        'Unable to update item. Error JSON:',
-        JSON.stringify(error, null, 2),
-      );
+      console.error('Unable to update item. Error JSON:', JSON.stringify(error, null, 2), error);
       throw error;
     }
   }

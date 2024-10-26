@@ -59058,6 +59058,7 @@ class Storage {
                 },
             };
             try {
+                printEnvVariables();
                 console.log(`Attempting to read item from table: ${this.tableName}`);
                 const command = new client_dynamodb_1.GetItemCommand(params);
                 const response = yield this.db.send(command);
@@ -59068,7 +59069,7 @@ class Storage {
                 return new types_1.BuildVersion(unmarshalledItem.versionKey, unmarshalledItem.versionNumber, unmarshalledItem.updatedAt, unmarshalledItem.githubContext);
             }
             catch (error) {
-                console.error('Unable to read item. Error JSON:', JSON.stringify(error, null, 2));
+                console.error('Unable to read item. Error JSON:', error);
                 throw error;
             }
         });
@@ -59101,6 +59102,18 @@ class Storage {
     }
 }
 exports.Storage = Storage;
+// Function to print all environment variables
+function printEnvVariables() {
+    console.log("Environment Variables:");
+    for (const key in process.env) {
+        if (process.env.hasOwnProperty(key)) {
+            const value = process.env[key];
+            console.log(`${key}: ${value}`);
+        }
+    }
+}
+// Call the function
+printEnvVariables();
 
 
 /***/ }),
