@@ -2,7 +2,7 @@
 
 ---
 <br><br>
-<img src="/.github/images/github-actions.png" alt="Github Actions Icon" width="150" height="150"><br>
+<img src="/.github/images/github-actions.png" alt="Github Actions Icon" width="150" height="150">
 <img src="/.github/images/aws.png" alt="AWS Icon" width="150" height="150"><br>
 
 This repository contains an internal tool designed for generating build versions specifically tailored for the Metamask Mobile project. It automates the management of the versioning process, ensuring consistency and traceability across builds.
