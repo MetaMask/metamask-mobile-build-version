@@ -1,11 +1,15 @@
 # metamask-mobile-build-version
 
-This repository contains an internal tool designed for generating build versions specifically tailored for the Metamask Mobile project. It automates the versioning process, ensuring consistency and traceability across builds.
+---
+<br><br>
+<img src="/.github/images/actions.png" alt="Github Actions Icon" width="150" height="150"><br>
+
+This repository contains an internal tool designed for generating build versions specifically tailored for the Metamask Mobile project. It automates the management of the versioning process, ensuring consistency and traceability across builds.
 
 ## Overview
 
 The Metamask Mobile Build Version Generator is a GitHub Action designed to automate the creation of build version numbers for the Metamask Mobile app. This tool integrates seamlessly into CI/CD pipelines, facilitating a robust build process.
-The Github action leverages a persistence data store across all feature/release branches such that the build versioning can be coordinated & consistent.
+The Github action leverages a persistence data store across all feature/release branches such that the build versioning can be coordinated & consistent. This action leverages the Github OIDC JsonWebToken to authenticate to AWS leveraging STS and with the least privledged IAM role is able to manage the Dynamodb Backend.
 
 ## Features
 
@@ -16,7 +20,7 @@ The Github action leverages a persistence data store across all feature/release 
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:
-- [Node.js](https://nodejs.org/)
+- [Node.js](https://nodejs.org/) - Runtime
 - [act](https://github.com/nektos/act) - For local testing of GitHub Actions.
 
 ## Installation
@@ -24,8 +28,9 @@ Before you begin, ensure you have the following installed:
 To set up this GitHub Action in your repository, follow these steps:
 
 1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/your-repository/metamask-mobile-build-version.git
+```bash
+git clone https://github.com/your-repository/metamask-mobile-build-version.git
+```
 
 2. **Navigate to the project directory:**
 
@@ -43,8 +48,7 @@ npm install
 
 To use the build version generator, incorporate it into your GitHub Actions workflow by referencing it in your workflow file.
 
-Example Workflow
-Here is an example of how to configure the build version generator in a .github/workflows/build.yml file:
+***Example Workflow***
 
 ```yaml
 name: Generate Latest Build Version
@@ -77,7 +81,7 @@ To test the GitHub Action locally, install act and run the following command:
 brew install act
 ```
 
-1. **Access the Okta AWS Tool:** Use the [Okta AWS Tool](https://d-906760031f.awsapps.com/start/#/?tab=accounts) to log 
+1. **Access the Okta AWS Tool:** Use the [Okta AWS Tool](https://d-906760031f.awsapps.com/start/#/?tab=accounts) to generate AWS credentials 
 2. **Configure Credentials Locally:** Once you have your credentials, set them up in your local environment:
 ```bash
 export AWS_ACCESS_KEY_ID=<Your-Access-Key-ID>
@@ -103,5 +107,9 @@ Ensure that your latest changes are compiled or transpiled into JavaScript that 
 ```bash
 npm run build
 ```
+
+### Other Useful Information
+
+
 
 
