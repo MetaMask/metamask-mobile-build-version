@@ -1,0 +1,38 @@
+on:
+  workflow_call:
+    inputs:
+      build-version-table:
+        description: 'The name of the table to store the build version.'
+        required: false
+        type: string
+        default: 'metamask-mobile-build-version'
+      build-version-key:
+        description: 'The key to store the build version under.'
+        required: false
+        type: string
+        default: 'metamask-mobile'
+    outputs:
+      build-version:
+        description: 'Latest build version.'
+        value: ${{ jobs.generate-build-version.outputs.build-version }}
+
+jobs:
+  generate-build-version:
+    runs-on: ubuntu-latest
+    outputs:
+      build-version: ${{ steps.build-version.outputs.build-version }} # Capture the output & propagate it up
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Version Generator
+        id: build-version
+        uses: ./
+        with:
+          build-version-table: metamask-mobile-build-version
+          build-version-key: metamask-mobile
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+

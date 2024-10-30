@@ -1,0 +1,30 @@
+{
+  "name": "metamask-mobile-build-version",
+  "version": "0.1.0",
+  "description": "",
+  "main": "./action/index.js",
+  "scripts": {
+    "pack": "ncc build ./src/index.ts --out action",
+    "build": "ncc build ./src/index.ts --out action",
+    "lint:tsc": "tsc",
+    "lint:eslint": "eslint --ignore-path .gitignore --ext .ts .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "dependencies": {
+    "@actions/core": "^1.10.0",
+    "@actions/github": "^5.1.1",
+    "@aws-sdk/client-dynamodb": "^3.679.0",
+    "@aws-sdk/util-dynamodb": "^3.679.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "@vercel/ncc": "^0.36.1",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^2.8.8",
+    "typescript": "^5.1.6"
+  }
+}
