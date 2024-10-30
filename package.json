@@ -1,6 +1,6 @@
 {
   "name": "metamask-mobile-build-version",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "./action/index.js",
   "scripts": {

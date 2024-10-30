@@ -109,6 +109,11 @@ Ensure that your latest changes are compiled or transpiled into JavaScript that 
 npm run build
 ```
 
+#### Bumping the Version
+
+There is a self reference in the workflow *metamask-mobile-build-version.yml* so make sure you update the reference 
+along with the package.json when creating new versions
+
 #### Backend and Infrastructure
 
 The backend for this action relies on **DynamoDB**, and the dependent AWS infrastructure is provisioned and managed through a specific GitHub repository. For more details on the infrastructure setup, configurations, and management, refer to the following repository:

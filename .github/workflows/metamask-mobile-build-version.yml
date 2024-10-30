@@ -9,7 +9,7 @@ on:
       aws-role-arn:
         description: 'The ARN of the role to assume.'
         required: false
-        default: 'arn:aws:iam::024218747365:role/metamask-mobile-build-version'
+        default: 'arn:aws:iam::921473456820:role/metamask-mobile-build-version' #mmcx-prd
         type: string
       build-version-table:
         description: 'The name of the table to store the build version.'
@@ -36,7 +36,7 @@ jobs:
 
       - name: Build Version Generator
         id: build-version
-        uses: MetaMask/metamask-mobile-build-version@poc
+        uses: MetaMask/metamask-mobile-build-version@0.1.0
         with:
           build-version-table: metamask-mobile-build-version
           build-version-key: metamask-mobile
