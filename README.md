@@ -65,7 +65,7 @@ permissions:
 
 jobs:
   generate-build-version:
-    uses: MetaMask/metamask-mobile-build-version/.github/workflows/metamask-mobile-build-version.yml@v1.0.0
+    uses: MetaMask/metamask-mobile-build-version/.github/workflows/metamask-mobile-build-version.yml@v0.1.0
 
   process-output:
     needs: generate-build-version

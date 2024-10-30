@@ -7,7 +7,6 @@ import { BuildVersion, GitHubContext } from './types';
 async function main() {
   try {
     // Get the github action inputs
-    const accessToken = getInput('github-token');
     const buildVersionTable = getInput('build-version-table');
     const versionKey = getInput('build-version-key');
 
@@ -41,7 +40,7 @@ async function main() {
     newVersion.versionNumber = currentVersion.versionNumber + 1;
     newVersion.updatedAt = new Date().toISOString();
     newVersion.githubContext = githubContext;
-    newVersion.versionKey = 'metamask-mobile';
+    newVersion.versionKey = currentVersion.versionKey;
 
     // Update the build version information
     const updatedVersion = await storage.updateVersion(newVersion);
@@ -67,6 +66,7 @@ async function main() {
   }
 }
 
+// Print the GitHub context for the pipeline
 function printContext(githubContext?: GitHubContext): void {
 
   if (githubContext) {
