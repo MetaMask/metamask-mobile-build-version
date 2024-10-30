@@ -1,7 +1,7 @@
 import { getInput, setFailed, setOutput } from '@actions/core';
-import { context, getOctokit } from '@actions/github';
+import { context } from '@actions/github';
 import { Storage } from './storage';
-import { BuildVersion, GitHubContext } from './types';
+import { GitHubContext } from './types';
 
 // Main function
 async function main() {
