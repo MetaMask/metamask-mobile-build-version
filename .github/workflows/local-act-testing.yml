@@ -7,7 +7,7 @@ on:
         type: string
         default: 'metamask-mobile-build-version'
       build-version-key:
-        description: 'The key to store the build version under.'
+        description: 'The key to store the build version under in the database.'
         required: false
         type: string
         default: 'metamask-mobile'
