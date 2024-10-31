@@ -1,0 +1,43 @@
+on:
+  workflow_call:
+    inputs:
+      aws-region:
+        description: 'The AWS region to use.'
+        required: false
+        default: 'us-east-2'
+        type: string
+      aws-role-arn:
+        description: 'The ARN of the role to assume.'
+        required: false
+        default: 'arn:aws:iam::921473456820:role/metamask-mobile-build-version' #mmcx-prd
+        type: string
+      build-version-table:
+        description: 'The name of the table to store the build version.'
+        required: false
+        type: string
+        default: 'metamask-mobile-build-version'
+    outputs:
+      build-version:
+        description: 'Latest build version.'
+        value: ${{ jobs.generate-build-version.outputs.build-version }}
+
+jobs:
+  generate-build-version:
+    runs-on: ubuntu-latest
+    outputs:
+      build-version: ${{ steps.build-version.outputs.build-version }} # Capture the output & propagate it up
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ inputs.aws-region }}
+          role-to-assume: ${{ inputs.aws-role-arn }}
+          role-session-name: GitHubActionSession
+
+      - name: Build Version Generator
+        id: build-version
+        uses: MetaMask/metamask-mobile-build-version@0.1.0
+        with:
+          build-version-table: metamask-mobile-build-version
+          build-version-key: metamask-mobile
+          github-token: ${{ secrets.GITHUB_TOKEN }}
