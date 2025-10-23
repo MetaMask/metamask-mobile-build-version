@@ -56334,6 +56334,18 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core_1 = __nccwpck_require__(7484);
 const github_1 = __nccwpck_require__(3228);
 const storage_1 = __nccwpck_require__(1134);
+const lock_manager_1 = __nccwpck_require__(9814);
+function getNumberInput(inputName, defaultValue) {
+    const rawValue = (0, core_1.getInput)(inputName);
+    if (!rawValue) {
+        return defaultValue;
+    }
+    const parsed = Number(rawValue);
+    if (Number.isNaN(parsed) || parsed <= 0) {
+        throw new Error(`Invalid numeric input provided for ${inputName}: ${rawValue}`);
+    }
+    return parsed;
+}
 // Main function
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -56341,6 +56353,11 @@ function main() {
             // Get the github action inputs
             const buildVersionTable = (0, core_1.getInput)('build-version-table');
             const versionKey = (0, core_1.getInput)('build-version-key');
+            const lockTable = (0, core_1.getInput)('lock-table') || 'metamask-mobile-build-version-lock';
+            const lockKey = (0, core_1.getInput)('lock-key') || `${buildVersionTable}#${versionKey}`;
+            const lockLeaseDurationSeconds = getNumberInput('lock-lease-duration-seconds', 60);
+            const lockWaitTimeoutSeconds = getNumberInput('lock-wait-timeout-seconds', 300);
+            const lockPollIntervalSeconds = getNumberInput('lock-poll-interval-seconds', 5);
             // Get the github context
             const githubContext = {
                 eventName: github_1.context.eventName,
@@ -56354,24 +56371,44 @@ function main() {
                 organization: github_1.context.repo.owner,
             };
             const storage = new storage_1.Storage(buildVersionTable);
-            // Fetch the current build version information.
-            const currentVersion = yield storage.getCurrentVersion(versionKey);
-            console.log(`Current version number retrieved: ${currentVersion.versionNumber} for version key ${currentVersion.versionKey}`);
-            console.log(`Last Updated at : ${currentVersion.updatedAt}`);
-            printContext(currentVersion.githubContext);
-            const newVersion = currentVersion;
-            //Increment Version & Meta Data
-            newVersion.versionNumber = currentVersion.versionNumber + 1;
-            newVersion.updatedAt = new Date().toISOString();
-            newVersion.githubContext = githubContext;
-            newVersion.versionKey = currentVersion.versionKey;
-            // Update the build version information
-            const updatedVersion = yield storage.updateVersion(newVersion);
-            console.log(`Updated version number: ${updatedVersion.versionNumber} for version key ${updatedVersion.versionKey}`);
-            console.log(`Last Updated at : ${updatedVersion.updatedAt}`);
-            printContext(updatedVersion.githubContext);
-            // Set the output for the build version for use by downstream actions/workflows
-            (0, core_1.setOutput)('build-version', updatedVersion.versionNumber.toString());
+            const lockManager = new lock_manager_1.LockManager(lockTable);
+            let lockHandle;
+            try {
+                lockHandle = yield lockManager.acquireLock({
+                    lockKey,
+                    owner: `${githubContext.runId}`,
+                    leaseDurationSeconds: lockLeaseDurationSeconds,
+                    waitTimeoutSeconds: lockWaitTimeoutSeconds,
+                    pollIntervalSeconds: lockPollIntervalSeconds,
+                });
+            }
+            catch (error) {
+                throw new Error(`Unable to acquire lock '${lockKey}'. Ensure no other pipeline is incrementing the build version. ${String(error)}`);
+            }
+            try {
+                const currentVersion = yield storage.getCurrentVersion(versionKey);
+                console.log(`Current version number retrieved: ${currentVersion.versionNumber} for version key ${currentVersion.versionKey}`);
+                console.log(`Last Updated at : ${currentVersion.updatedAt}`);
+                printContext(currentVersion.githubContext);
+                const newVersion = currentVersion;
+                //Increment Version & Meta Data
+                newVersion.versionNumber = currentVersion.versionNumber + 1;
+                newVersion.updatedAt = new Date().toISOString();
+                newVersion.githubContext = githubContext;
+                newVersion.versionKey = currentVersion.versionKey;
+                // Update the build version information
+                const updatedVersion = yield storage.updateVersion(newVersion);
+                console.log(`Updated version number: ${updatedVersion.versionNumber} for version key ${updatedVersion.versionKey}`);
+                console.log(`Last Updated at : ${updatedVersion.updatedAt}`);
+                printContext(updatedVersion.githubContext);
+                // Set the output for the build version for use by downstream actions/workflows
+                (0, core_1.setOutput)('build-version', updatedVersion.versionNumber.toString());
+            }
+            finally {
+                if (lockHandle) {
+                    yield lockManager.releaseLock(lockHandle.lockKey, lockHandle.owner);
+                }
+            }
         }
         catch (error) {
             const reason = error instanceof Error
@@ -56404,6 +56441,134 @@ main();
 
 /***/ }),
 
+/***/ 9814:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.LockManager = void 0;
+const client_dynamodb_1 = __nccwpck_require__(4305);
+const MIN_POLL_INTERVAL_SECONDS = 1;
+class LockManager {
+    constructor(tableName, dbClient) {
+        if (!tableName) {
+            throw new Error('Lock table name must be provided');
+        }
+        this.tableName = tableName;
+        this.db = dbClient !== null && dbClient !== void 0 ? dbClient : new client_dynamodb_1.DynamoDBClient({});
+    }
+    acquireLock(options) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            const pollIntervalSeconds = Math.max(options.pollIntervalSeconds, MIN_POLL_INTERVAL_SECONDS);
+            const start = Date.now();
+            while (true) {
+                const nowEpochSeconds = Math.floor(Date.now() / 1000);
+                const leaseExpiryEpochSeconds = nowEpochSeconds + options.leaseDurationSeconds;
+                try {
+                    const command = new client_dynamodb_1.PutItemCommand({
+                        TableName: this.tableName,
+                        Item: {
+                            lockKey: { S: options.lockKey },
+                            holder: { S: options.owner },
+                            expiresAt: { N: leaseExpiryEpochSeconds.toString() },
+                        },
+                        ConditionExpression: 'attribute_not_exists(lockKey) OR expiresAt < :nowEpochSeconds',
+                        ExpressionAttributeValues: {
+                            ':nowEpochSeconds': { N: nowEpochSeconds.toString() },
+                        },
+                    });
+                    yield this.db.send(command);
+                    console.log(`Lock '${options.lockKey}' acquired by '${options.owner}' until ${new Date(leaseExpiryEpochSeconds * 1000).toISOString()}.`);
+                    return {
+                        lockKey: options.lockKey,
+                        owner: options.owner,
+                        expiresAtEpochSeconds: leaseExpiryEpochSeconds,
+                    };
+                }
+                catch (error) {
+                    if (error instanceof client_dynamodb_1.ConditionalCheckFailedException) {
+                        const lockMeta = yield this.describeLock(options.lockKey);
+                        if (lockMeta) {
+                            const expiryIso = lockMeta.expiresAtEpochSeconds
+                                ? new Date(lockMeta.expiresAtEpochSeconds * 1000).toISOString()
+                                : 'unknown';
+                            console.log(`Lock '${options.lockKey}' currently held by '${(_a = lockMeta.holder) !== null && _a !== void 0 ? _a : 'unknown'}' until ${expiryIso}. Waiting ${pollIntervalSeconds}s before retrying...`);
+                        }
+                        else {
+                            console.log(`Failed to acquire lock '${options.lockKey}'. Lock record not readable; will retry in ${pollIntervalSeconds}s.`);
+                        }
+                    }
+                    else {
+                        throw error;
+                    }
+                }
+                const elapsedSeconds = (Date.now() - start) / 1000;
+                if (elapsedSeconds >= options.waitTimeoutSeconds) {
+                    throw new Error(`Timed out after waiting ${options.waitTimeoutSeconds}s to acquire lock '${options.lockKey}'.`);
+                }
+                yield new Promise(resolve => setTimeout(resolve, pollIntervalSeconds * 1000));
+            }
+        });
+    }
+    releaseLock(lockKey, owner) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield this.db.send(new client_dynamodb_1.DeleteItemCommand({
+                    TableName: this.tableName,
+                    Key: {
+                        lockKey: { S: lockKey },
+                    },
+                    ConditionExpression: 'holder = :holder',
+                    ExpressionAttributeValues: {
+                        ':holder': { S: owner },
+                    },
+                }));
+                console.log(`Lock '${lockKey}' released by '${owner}'.`);
+            }
+            catch (error) {
+                console.warn(`Unable to release lock '${lockKey}' for owner '${owner}'. It may have expired or been taken by another process.`, error);
+            }
+        });
+    }
+    describeLock(lockKey) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b;
+            const response = yield this.db.send(new client_dynamodb_1.GetItemCommand({
+                TableName: this.tableName,
+                Key: {
+                    lockKey: { S: lockKey },
+                },
+                ConsistentRead: true,
+            }));
+            if (!response.Item) {
+                return undefined;
+            }
+            const holder = (_a = response.Item.holder) === null || _a === void 0 ? void 0 : _a.S;
+            const expiresAtRaw = (_b = response.Item.expiresAt) === null || _b === void 0 ? void 0 : _b.N;
+            const expiresAtEpochSeconds = expiresAtRaw ? parseInt(expiresAtRaw, 10) : undefined;
+            return {
+                holder,
+                expiresAtEpochSeconds,
+            };
+        });
+    }
+}
+exports.LockManager = LockManager;
+
+
+/***/ }),
+
 /***/ 1134:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -56427,9 +56592,9 @@ const util_dynamodb_1 = __nccwpck_require__(2909);
  * Storage class to interact with DynamoDB
  */
 class Storage {
-    constructor(tableName) {
+    constructor(tableName, dbClient) {
         this.tableName = tableName;
-        this.db = new client_dynamodb_1.DynamoDBClient({});
+        this.db = dbClient !== null && dbClient !== void 0 ? dbClient : new client_dynamodb_1.DynamoDBClient({});
     }
     /**
      * Get the current build version information from the DynamoDB table
