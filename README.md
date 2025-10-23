@@ -12,6 +12,10 @@ This repository contains an internal tool designed for generating build versions
 The Metamask Mobile Build Version Generator is a GitHub Action designed to automate the creation of build version numbers for the Metamask Mobile app. This tool integrates seamlessly into CI/CD pipelines, facilitating a robust build process.
 The Github action leverages a persistence data store across all feature/release branches such that the build versioning can be coordinated & consistent. This action leverages the Github OIDC JsonWebToken to authenticate to AWS leveraging STS and with the least privledged IAM role is able to manage the Dynamodb Backend.
 
+## Locking Behaviour
+
+To avoid race conditions when multiple pipelines attempt to bump the build number simultaneously, the action acquires a distributed lock stored in DynamoDB before reading and updating the build version record. While waiting for the lock the action emits logs detailing which pipeline currently holds the lock and when it will expire. Defaults are provided for the lock table name, key, polling interval, lease length, and timeout, but these can be customised via the action inputs listed below.
+
 ## Features
 
 - **Automatic Version Generation:** Streamlines the versioning process for new builds.
