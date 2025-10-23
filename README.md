@@ -16,6 +16,8 @@ The Github action leverages a persistence data store across all feature/release 
 
 To avoid race conditions when multiple pipelines attempt to bump the build number simultaneously, the action acquires a distributed lock stored in DynamoDB before reading and updating the build version record. While waiting for the lock the action emits logs detailing which pipeline currently holds the lock and when it will expire. Defaults are provided for the lock table name, key, polling interval, lease length, and timeout, but these can be customised via the action inputs listed below.
 
+When a workflow acquires a lock it records the owner (the GitHub Actions run ID) and an expiry timestamp. Prior to modifying the build version record the action re-reads the lock table to ensure the entry still belongs to the current run and has not expired; if the ownership check fails the workflow aborts, preventing double increments even if the original lease elapsed. Locks are released explicitly in a `finally` block, and DynamoDB TTL acts as a backstop to garbage collect abandoned locks.
+
 ## Features
 
 - **Automatic Version Generation:** Streamlines the versioning process for new builds.
