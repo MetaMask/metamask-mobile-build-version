@@ -65,6 +65,10 @@ async function main() {
 
     try {
       const currentVersion = await storage.getCurrentVersion(versionKey);
+      console.log(
+        `Verifying lock ownership for '${lockHandle.lockKey}' prior to updating version '${versionKey}'.`,
+      );
+      await lockManager.assertLockOwnership(lockHandle);
 
       console.log(
         `Current version number retrieved: ${currentVersion.versionNumber} for version key ${currentVersion.versionKey}`,

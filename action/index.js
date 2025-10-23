@@ -56387,6 +56387,8 @@ function main() {
             }
             try {
                 const currentVersion = yield storage.getCurrentVersion(versionKey);
+                console.log(`Verifying lock ownership for '${lockHandle.lockKey}' prior to updating version '${versionKey}'.`);
+                yield lockManager.assertLockOwnership(lockHandle);
                 console.log(`Current version number retrieved: ${currentVersion.versionNumber} for version key ${currentVersion.versionKey}`);
                 console.log(`Last Updated at : ${currentVersion.updatedAt}`);
                 printContext(currentVersion.githubContext);
@@ -56538,6 +56540,24 @@ class LockManager {
             }
             catch (error) {
                 console.warn(`Unable to release lock '${lockKey}' for owner '${owner}'. It may have expired or been taken by another process.`, error);
+            }
+        });
+    }
+    assertLockOwnership(lockHandle) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            const lockMeta = yield this.describeLock(lockHandle.lockKey);
+            if (!lockMeta) {
+                throw new Error(`Lock '${lockHandle.lockKey}' is no longer present in table '${this.tableName}'.`);
+            }
+            if (lockMeta.holder !== lockHandle.owner) {
+                throw new Error(`Lock '${lockHandle.lockKey}' is now held by '${(_a = lockMeta.holder) !== null && _a !== void 0 ? _a : 'unknown'}'.`);
+            }
+            console.log(`Lock ownership verified for '${lockHandle.lockKey}'. Holder '${lockHandle.owner}' matches the lock record.`);
+            const nowEpochSeconds = Math.floor(Date.now() / 1000);
+            if (typeof lockMeta.expiresAtEpochSeconds === 'number' &&
+                lockMeta.expiresAtEpochSeconds <= nowEpochSeconds) {
+                throw new Error(`Lock '${lockHandle.lockKey}' owned by '${lockHandle.owner}' has expired at ${new Date(lockMeta.expiresAtEpochSeconds * 1000).toISOString()}.`);
             }
         });
     }

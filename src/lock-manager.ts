@@ -137,6 +137,38 @@ export class LockManager {
     }
   }
 
+  async assertLockOwnership(lockHandle: LockHandle): Promise<void> {
+    const lockMeta = await this.describeLock(lockHandle.lockKey);
+
+    if (!lockMeta) {
+      throw new Error(
+        `Lock '${lockHandle.lockKey}' is no longer present in table '${this.tableName}'.`,
+      );
+    }
+
+    if (lockMeta.holder !== lockHandle.owner) {
+      throw new Error(
+        `Lock '${lockHandle.lockKey}' is now held by '${lockMeta.holder ?? 'unknown'}'.`,
+      );
+    }
+
+    console.log(
+      `Lock ownership verified for '${lockHandle.lockKey}'. Holder '${lockHandle.owner}' matches the lock record.`,
+    );
+
+    const nowEpochSeconds = Math.floor(Date.now() / 1000);
+    if (
+      typeof lockMeta.expiresAtEpochSeconds === 'number' &&
+      lockMeta.expiresAtEpochSeconds <= nowEpochSeconds
+    ) {
+      throw new Error(
+        `Lock '${lockHandle.lockKey}' owned by '${lockHandle.owner}' has expired at ${new Date(
+          lockMeta.expiresAtEpochSeconds * 1000,
+        ).toISOString()}.`,
+      );
+    }
+  }
+
   private async describeLock(lockKey: string): Promise<LockMeta | undefined> {
     const response = await this.db.send(
       new GetItemCommand({
