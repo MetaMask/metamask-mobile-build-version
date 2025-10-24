@@ -2,6 +2,23 @@ import { getInput, setFailed, setOutput } from '@actions/core';
 import { context } from '@actions/github';
 import { Storage } from './storage';
 import { GitHubContext } from './types';
+import { LockManager, LockHandle } from './lock-manager';
+
+function getNumberInput(inputName: string, defaultValue: number): number {
+  const rawValue = getInput(inputName);
+
+  if (!rawValue) {
+    return defaultValue;
+  }
+
+  const parsed = Number(rawValue);
+
+  if (Number.isNaN(parsed) || parsed <= 0) {
+    throw new Error(`Invalid numeric input provided for ${inputName}: ${rawValue}`);
+  }
+
+  return parsed;
+}
 
 // Main function
 async function main() {
@@ -9,6 +26,11 @@ async function main() {
     // Get the github action inputs
     const buildVersionTable = getInput('build-version-table');
     const versionKey = getInput('build-version-key');
+    const lockTable = getInput('lock-table') || 'metamask-mobile-build-version-lock';
+    const lockKey = getInput('lock-key') || `${buildVersionTable}#${versionKey}`;
+    const lockLeaseDurationSeconds = getNumberInput('lock-lease-duration-seconds', 60);
+    const lockWaitTimeoutSeconds = getNumberInput('lock-wait-timeout-seconds', 300);
+    const lockPollIntervalSeconds = getNumberInput('lock-poll-interval-seconds', 5);
 
     // Get the github context
     const githubContext = {
@@ -24,35 +46,60 @@ async function main() {
     };
 
     const storage = new Storage(buildVersionTable);
+    const lockManager = new LockManager(lockTable);
+    let lockHandle: LockHandle | undefined;
 
-    // Fetch the current build version information.
-    const currentVersion = await storage.getCurrentVersion(versionKey);
+    try {
+      lockHandle = await lockManager.acquireLock({
+        lockKey,
+        owner: `${githubContext.runId}`,
+        leaseDurationSeconds: lockLeaseDurationSeconds,
+        waitTimeoutSeconds: lockWaitTimeoutSeconds,
+        pollIntervalSeconds: lockPollIntervalSeconds,
+      });
+    } catch (error) {
+      throw new Error(
+        `Unable to acquire lock '${lockKey}'. Ensure no other pipeline is incrementing the build version. ${String(error)}`,
+      );
+    }
 
-    console.log(
-      `Current version number retrieved: ${currentVersion.versionNumber} for version key ${currentVersion.versionKey}`,
-    );
-    console.log(`Last Updated at : ${currentVersion.updatedAt}`);
-    printContext(currentVersion.githubContext);
+    try {
+      const currentVersion = await storage.getCurrentVersion(versionKey);
+      console.log(
+        `Verifying lock ownership for '${lockHandle.lockKey}' prior to updating version '${versionKey}'.`,
+      );
+      await lockManager.assertLockOwnership(lockHandle);
 
-    const newVersion = currentVersion;
+      console.log(
+        `Current version number retrieved: ${currentVersion.versionNumber} for version key ${currentVersion.versionKey}`,
+      );
+      console.log(`Last Updated at : ${currentVersion.updatedAt}`);
+      printContext(currentVersion.githubContext);
 
-    //Increment Version & Meta Data
-    newVersion.versionNumber = currentVersion.versionNumber + 1;
-    newVersion.updatedAt = new Date().toISOString();
-    newVersion.githubContext = githubContext;
-    newVersion.versionKey = currentVersion.versionKey;
+      const newVersion = currentVersion;
 
-    // Update the build version information
-    const updatedVersion = await storage.updateVersion(newVersion);
+      //Increment Version & Meta Data
+      newVersion.versionNumber = currentVersion.versionNumber + 1;
+      newVersion.updatedAt = new Date().toISOString();
+      newVersion.githubContext = githubContext;
+      newVersion.versionKey = currentVersion.versionKey;
 
-    console.log(
-      `Updated version number: ${updatedVersion.versionNumber} for version key ${updatedVersion.versionKey}`,
-    );
-    console.log(`Last Updated at : ${updatedVersion.updatedAt}`);
-    printContext(updatedVersion.githubContext);
+      // Update the build version information
+      const updatedVersion = await storage.updateVersion(newVersion);
 
-    // Set the output for the build version for use by downstream actions/workflows
-    setOutput('build-version', updatedVersion.versionNumber.toString());
+      console.log(
+        `Updated version number: ${updatedVersion.versionNumber} for version key ${updatedVersion.versionKey}`,
+      );
+      console.log(`Last Updated at : ${updatedVersion.updatedAt}`);
+      printContext(updatedVersion.githubContext);
+
+      // Set the output for the build version for use by downstream actions/workflows
+      setOutput('build-version', updatedVersion.versionNumber.toString());
+    } finally {
+      if (lockHandle) {
+        await lockManager.releaseLock(lockHandle.lockKey, lockHandle.owner);
+      }
+    }
     
   } catch (error) {
     const reason =

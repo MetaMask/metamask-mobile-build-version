@@ -15,9 +15,9 @@ export class Storage {
    */
   private db: DynamoDBClient;
 
-  constructor(tableName: string) {
+  constructor(tableName: string, dbClient?: DynamoDBClient) {
     this.tableName = tableName;
-    this.db = new DynamoDBClient({});
+    this.db = dbClient ?? new DynamoDBClient({});
   }
 
   /**
